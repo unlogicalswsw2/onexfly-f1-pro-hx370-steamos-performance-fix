@@ -8,7 +8,10 @@ Thumbs.db
 
 # Папки зависимостей и сборки
 node_modules/
+# По умолчанию игнорируем dist, но dist плагина коммитим (чтобы ставилось без сборки)
 dist/
+!onexfly-f1pro-performance-fix/dist/
+!onexfly-f1pro-performance-fix/dist/**
 *.log
 
 # Временные файлы

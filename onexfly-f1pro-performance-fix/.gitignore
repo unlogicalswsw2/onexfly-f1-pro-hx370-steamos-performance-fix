@@ -7,5 +7,4 @@
 
 # Папки зависимостей
 node_modules/
-dist/
 *.lock
