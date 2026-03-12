@@ -5,6 +5,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
+from urllib.request import urlopen
 
 import decky
 
@@ -21,6 +22,13 @@ GPU_POWER_PROFILE_MODE = Path("/sys/class/drm/card0/device/pp_power_profile_mode
 DEFAULT_CPU_GOVERNOR = "schedutil"
 DEFAULT_GPU_DPM_LEVEL = "auto"
 DEFAULT_GPU_POWER_PROFILE_MODE = "0"
+
+# Base URL for self-update (raw GitHub).
+UPDATE_BASE_URL = (
+    "https://raw.githubusercontent.com/"
+    "unlogicalswsw2/onexfly-f1-pro-hx370-steamos-performance-fix/"
+    "main/onexfly-f1pro-performance-fix"
+)
 
 
 @dataclass
@@ -53,13 +61,8 @@ class Plugin:
         """
         persisted = self._load_state()
 
-        # Best-effort runtime check: service enabled + sysfs values.
-        service_enabled = self._systemd_is_enabled(SERVICE_NAME)
-        sysfs_enabled = self._is_sysfs_in_perf_mode()
-        enabled = bool(persisted.enabled and service_enabled and sysfs_enabled)
-
         return {
-            "enabled": enabled,
+            "enabled": bool(persisted.enabled),
         }
 
     async def set_enabled(self, enabled: bool) -> Dict[str, Any]:
@@ -68,6 +71,21 @@ class Plugin:
         """
         await self._set_enabled(bool(enabled))
         return await self.get_status()
+
+    async def update_plugin(self) -> Dict[str, Any]:
+        """
+        Download latest plugin files from GitHub into this plugin directory.
+        Does not auto-restart Decky; user should restart Decky/Steam UI after update.
+        """
+        loop = asyncio.get_event_loop()
+        try:
+            await loop.run_in_executor(None, self._do_update)
+            msg = "Update downloaded. Please restart Decky Loader to apply changes."
+            decky.logger.info(msg)
+            return {"ok": True, "message": msg}
+        except Exception as e:
+            decky.logger.exception("Update failed")
+            return {"ok": False, "message": str(e)}
 
     # -------- Core toggle logic --------
     async def _set_enabled(self, enabled: bool) -> None:
@@ -81,13 +99,22 @@ class Plugin:
     async def _enable(self) -> None:
         state = self._load_state()
 
-        # We need /etc + /usr/local writes; ensure filesystem is writable.
+        # We need /etc + /usr/local writes; ensure filesystem is writable where supported.
         if state.readonly_was_enabled is None:
-            state.readonly_was_enabled = self._steamos_readonly_is_enabled()
-            self._save_state(state)
+            try:
+                state.readonly_was_enabled = self._steamos_readonly_is_enabled()
+                self._save_state(state)
+            except RuntimeError:
+                # steamos-readonly not present or unsupported; ignore and proceed.
+                decky.logger.warning("steamos-readonly not available; assuming writable filesystem")
+                state.readonly_was_enabled = None
+                self._save_state(state)
 
         if state.readonly_was_enabled:
-            self._run(["steamos-readonly", "disable"], check=True)
+            try:
+                self._run(["steamos-readonly", "disable"], check=True)
+            except RuntimeError as e:
+                decky.logger.warning(f"Failed to disable steamos-readonly: {e}")
 
         # Disable power-profiles-daemon (same as script).
         self._run(["systemctl", "stop", "power-profiles-daemon"], check=False)
@@ -139,7 +166,10 @@ class Plugin:
 
         # Restore SteamOS read-only mode if it was enabled before we touched it.
         if state.readonly_was_enabled:
-            self._run(["steamos-readonly", "enable"], check=False)
+            try:
+                self._run(["steamos-readonly", "enable"], check=False)
+            except RuntimeError as e:
+                decky.logger.warning(f"Failed to re-enable steamos-readonly: {e}")
 
         state.enabled = False
         self._save_state(state)
@@ -186,6 +216,39 @@ class Plugin:
         tmp.write_text(content)
         os.chmod(tmp, mode)
         tmp.replace(path)
+
+    # -------- Helpers: self-update --------
+    def _do_update(self) -> None:
+        plugin_dir = Path(__file__).resolve().parent
+        files_to_update = [
+            "main.py",
+            "plugin.json",
+            "package.json",
+            "rollup.config.mjs",
+            "tsconfig.json",
+            "README.md",
+            "src/index.tsx",
+            "dist/index.js",
+            "dist/index.js.map",
+        ]
+
+        for rel in files_to_update:
+            url = f"{UPDATE_BASE_URL}/{rel}"
+            target = plugin_dir / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+
+            decky.logger.info(f"Updating {rel} from {url}")
+            with urlopen(url) as resp:
+                if resp.status != 200:
+                    raise RuntimeError(f"Failed to download {rel}: HTTP {resp.status}")
+                data = resp.read()
+
+            # Binary-safe write.
+            tmp = target.with_suffix(target.suffix + ".tmp")
+            with open(tmp, "wb") as f:
+                f.write(data)
+            os.chmod(tmp, 0o644)
+            tmp.replace(target)
 
     # -------- Helpers: sysfs writes --------
     def _set_all_cpu_governors(self, governor: str) -> None:
@@ -234,8 +297,13 @@ class Plugin:
 
     # -------- Helpers: SteamOS read-only state --------
     def _steamos_readonly_is_enabled(self) -> bool:
-        # steamos-readonly status outputs "enabled"/"disabled" depending on build.
-        res = self._run(["steamos-readonly", "status"], check=False)
+        # steamos-readonly is only present on SteamOS; treat missing command as "not enabled".
+        try:
+            res = self._run(["steamos-readonly", "status"], check=False)
+        except RuntimeError:
+            decky.logger.warning("steamos-readonly command not found; assuming read-only is disabled")
+            return False
+
         out = (res[1] or "").lower()
         if "enabled" in out:
             return True

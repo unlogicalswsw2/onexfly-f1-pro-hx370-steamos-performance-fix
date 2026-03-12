@@ -1,5 +1,5 @@
 import { callable, definePlugin, toaster } from "@decky/api";
-import { Field, PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
+import { ButtonItem, Field, PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
 import { useCallback, useEffect, useState } from "react";
 import { FaTachometerAlt } from "react-icons/fa";
 
@@ -9,10 +9,12 @@ type StatusResponse = {
 
 const getStatus = callable<[], StatusResponse>("get_status");
 const setEnabled = callable<[enabled: boolean], StatusResponse>("set_enabled");
+const updatePlugin = callable<[], { ok: boolean; message: string }>("update_plugin");
 
 function Content() {
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [busy, setBusy] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -49,6 +51,35 @@ function Content() {
     [refresh]
   );
 
+  const onUpdate = useCallback(async () => {
+    setUpdating(true);
+    setError(null);
+    try {
+      const res = await updatePlugin();
+      if (!res.ok) {
+        setError(res.message);
+        toaster.toast({
+          title: "OneXFly Performance Fix",
+          body: `Update failed: ${res.message}`,
+        });
+      } else {
+        toaster.toast({
+          title: "OneXFly Performance Fix",
+          body: res.message,
+        });
+      }
+    } catch (e) {
+      const msg = String(e);
+      setError(msg);
+      toaster.toast({
+        title: "OneXFly Performance Fix",
+        body: `Update error: ${msg}`,
+      });
+    } finally {
+      setUpdating(false);
+    }
+  }, []);
+
   const enabled = status?.enabled ?? false;
 
   return (
@@ -65,6 +96,12 @@ function Content() {
 
       <PanelSectionRow>
         <Field label="Status">{status === null ? "Loading…" : enabled ? "ON" : "OFF"}</Field>
+      </PanelSectionRow>
+
+      <PanelSectionRow>
+        <ButtonItem disabled={updating} onClick={onUpdate}>
+          {updating ? "Updating..." : "Update from GitHub"}
+        </ButtonItem>
       </PanelSectionRow>
 
       {error && (

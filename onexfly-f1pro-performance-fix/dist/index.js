@@ -87,9 +87,11 @@ function FaTachometerAlt (props) {
 
 const getStatus = callable("get_status");
 const setEnabled = callable("set_enabled");
+const updatePlugin = callable("update_plugin");
 function Content() {
     const [status, setStatus] = SP_REACT.useState(null);
     const [busy, setBusy] = SP_REACT.useState(false);
+    const [updating, setUpdating] = SP_REACT.useState(false);
     const [error, setError] = SP_REACT.useState(null);
     const refresh = SP_REACT.useCallback(async () => {
         setError(null);
@@ -122,8 +124,39 @@ function Content() {
             setBusy(false);
         }
     }, [refresh]);
+    const onUpdate = SP_REACT.useCallback(async () => {
+        setUpdating(true);
+        setError(null);
+        try {
+            const res = await updatePlugin();
+            if (!res.ok) {
+                setError(res.message);
+                toaster.toast({
+                    title: "OneXFly Performance Fix",
+                    body: `Update failed: ${res.message}`,
+                });
+            }
+            else {
+                toaster.toast({
+                    title: "OneXFly Performance Fix",
+                    body: res.message,
+                });
+            }
+        }
+        catch (e) {
+            const msg = String(e);
+            setError(msg);
+            toaster.toast({
+                title: "OneXFly Performance Fix",
+                body: `Update error: ${msg}`,
+            });
+        }
+        finally {
+            setUpdating(false);
+        }
+    }, []);
     const enabled = status?.enabled ?? false;
-    return (SP_JSX.jsxs(DFL.PanelSection, { title: "OneXFly F1 Pro", children: [SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ToggleField, { label: "Performance Fix", description: enabled ? "ON (performance mode applied)" : "OFF (defaults restored)", checked: enabled, disabled: busy, onChange: onToggle }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Status", children: status === null ? "Loading…" : enabled ? "ON" : "OFF" }) }), error && (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Error", children: error }) }))] }));
+    return (SP_JSX.jsxs(DFL.PanelSection, { title: "OneXFly F1 Pro", children: [SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ToggleField, { label: "Performance Fix", description: enabled ? "ON (performance mode applied)" : "OFF (defaults restored)", checked: enabled, disabled: busy, onChange: onToggle }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Status", children: status === null ? "Loading…" : enabled ? "ON" : "OFF" }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { disabled: updating, onClick: onUpdate, children: updating ? "Updating..." : "Update from GitHub" }) }), error && (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Error", children: error }) }))] }));
 }
 var index = definePlugin(() => {
     return {
