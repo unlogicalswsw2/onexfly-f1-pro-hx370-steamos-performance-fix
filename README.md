@@ -21,7 +21,18 @@ On the device (SteamOS) run:
 
 ```bash
 cd ~/homebrew/plugins
-git clone https://github.com/unlogicalswsw2/onexfly-f1-pro-hx370-steamos-performance-fix.git
+git clone https://github.com/unlogicalswsw2/onexfly-f1-pro-hx370-steamos-performance-fix.git onexfly-fix-repo
+cp -a onexfly-fix-repo/onexfly-f1pro-performance-fix ./onexfly-f1pro-performance-fix
+rm -rf onexfly-fix-repo
+```
+
+If you get permission errors, try the same commands with `sudo`:
+
+```bash
+cd ~/homebrew/plugins
+sudo git clone https://github.com/unlogicalswsw2/onexfly-f1-pro-hx370-steamos-performance-fix.git onexfly-fix-repo
+sudo cp -a onexfly-fix-repo/onexfly-f1pro-performance-fix ./onexfly-f1pro-performance-fix
+sudo rm -rf onexfly-fix-repo
 ```
 
 Then restart Decky Loader (or reboot), and enable the plugin:

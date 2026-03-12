@@ -76,8 +76,9 @@ class Plugin:
     async def _set_enabled(self, enabled: bool) -> None:
         device_ok, device_name = self._detect_device()
         if not device_ok:
-            raise RuntimeError(
-                f"Unsupported device ({device_name or 'unknown'}). This plugin is intended for OneXFly F1 Pro."
+            # Don't hard-block: DMI strings can be wrong/missing. We'll log a warning and still try.
+            decky.logger.warning(
+                f"Device check failed ({device_name or 'unknown'}). Proceeding anyway (intended for OneXFly F1 Pro)."
             )
 
         if enabled:
@@ -174,8 +175,23 @@ class Plugin:
         device_str = " | ".join([x for x in parts if x])
         lowered = device_str.lower()
 
-        # Conservative match: require both "onexfly" and an "f1" marker.
-        ok = ("onexfly" in lowered) and ("f1" in lowered)
+        # DMI strings can vary across BIOS revisions. Be tolerant but still specific.
+        # Accept common vendor strings plus an F1 marker.
+        vendor_markers = [
+            "onexfly",
+            "one-netbook",
+            "one netbook",
+            "onexplayer",
+        ]
+        model_markers = [
+            "f1",
+            "f1 pro",
+            "f1pro",
+        ]
+
+        vendor_ok = any(v in lowered for v in vendor_markers)
+        model_ok = any(m in lowered for m in model_markers)
+        ok = vendor_ok and model_ok
         return ok, (device_str or None)
 
     # -------- Helpers: persistence files --------

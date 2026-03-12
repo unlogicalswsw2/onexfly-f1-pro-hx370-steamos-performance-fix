@@ -1,4 +1,4 @@
-import { callable, definePlugin } from "@decky/api";
+import { callable, definePlugin, toaster } from "@decky/api";
 import { Field, PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
 import { useCallback, useEffect, useState } from "react";
 import { FaTachometerAlt } from "react-icons/fa";
@@ -37,7 +37,12 @@ function Content() {
       try {
         setStatus(await setEnabled(enabled));
       } catch (e) {
-        setError(String(e));
+        const msg = String(e);
+        setError(msg);
+        toaster.toast({
+          title: "OneXFly Performance Fix",
+          body: msg,
+        });
         await refresh();
       } finally {
         setBusy(false);
@@ -55,7 +60,7 @@ function Content() {
           label="Performance Fix"
           description={enabled ? "ON (performance mode applied)" : "OFF (defaults restored)"}
           checked={enabled}
-          disabled={busy || (status !== null && !status.device_ok)}
+          disabled={busy}
           onChange={onToggle}
         />
       </PanelSectionRow>
@@ -68,7 +73,9 @@ function Content() {
 
       {status !== null && !status.device_ok && (
         <PanelSectionRow>
-          <Field label="Status">Unsupported device (intended for OneXFly F1 Pro)</Field>
+          <Field label="Warning">
+            Device check did not match OneXFly F1 Pro. Toggle is still available, but use at your own risk.
+          </Field>
         </PanelSectionRow>
       )}
 

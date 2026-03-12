@@ -16,6 +16,7 @@ if (api._version != API_VERSION) {
     console.warn(`[@decky/api] Requested API version ${API_VERSION} but the running loader only supports version ${api._version}. Some features may not work.`);
 }
 const callable = api.callable;
+const toaster = api.toaster;
 const definePlugin = (fn) => {
     return (...args) => {
         return fn(...args);
@@ -109,7 +110,12 @@ function Content() {
             setStatus(await setEnabled(enabled));
         }
         catch (e) {
-            setError(String(e));
+            const msg = String(e);
+            setError(msg);
+            toaster.toast({
+                title: "OneXFly Performance Fix",
+                body: msg,
+            });
             await refresh();
         }
         finally {
@@ -117,7 +123,7 @@ function Content() {
         }
     }, [refresh]);
     const enabled = status?.enabled ?? false;
-    return (SP_JSX.jsxs(DFL.PanelSection, { title: "OneXFly F1 Pro", children: [SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ToggleField, { label: "Performance Fix", description: enabled ? "ON (performance mode applied)" : "OFF (defaults restored)", checked: enabled, disabled: busy || (status !== null && !status.device_ok), onChange: onToggle }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Device", children: status === null ? "Loading…" : status.device_name ?? "Unknown" }) }), status !== null && !status.device_ok && (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Status", children: "Unsupported device (intended for OneXFly F1 Pro)" }) })), error && (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Error", children: error }) }))] }));
+    return (SP_JSX.jsxs(DFL.PanelSection, { title: "OneXFly F1 Pro", children: [SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ToggleField, { label: "Performance Fix", description: enabled ? "ON (performance mode applied)" : "OFF (defaults restored)", checked: enabled, disabled: busy, onChange: onToggle }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Device", children: status === null ? "Loading…" : status.device_name ?? "Unknown" }) }), status !== null && !status.device_ok && (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Warning", children: "Device check did not match OneXFly F1 Pro. Toggle is still available, but use at your own risk." }) })), error && (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Error", children: error }) }))] }));
 }
 var index = definePlugin(() => {
     return {
