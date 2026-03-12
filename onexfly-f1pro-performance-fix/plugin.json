@@ -1,0 +1,12 @@
+{
+  "name": "OneXFly F1 Pro Performance Fix",
+  "author": "Your Name",
+  "flags": ["_root"],
+  "api_version": 1,
+  "publish": {
+    "tags": ["onexfly", "performance", "root", "systemd"],
+    "description": "Applies OneXFly F1 Pro performance optimizations (CPU governor + GPU perf + disables power-profiles-daemon) with a single toggle and reboot persistence.",
+    "image": "https://opengraph.githubassets.com/1/SteamDeckHomebrew/decky-plugin-template"
+  }
+}
+

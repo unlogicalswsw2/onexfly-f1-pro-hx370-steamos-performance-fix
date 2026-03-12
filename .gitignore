@@ -1,0 +1,16 @@
+# Системные файлы macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Папки зависимостей и сборки
+node_modules/
+dist/
+*.log
+
+# Временные файлы
+*.tmp
+*.temp

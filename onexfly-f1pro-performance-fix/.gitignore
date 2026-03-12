@@ -1,0 +1,11 @@
+# Системные файлы
+.DS_Store
+._*
+*.log
+*.tmp
+*.temp
+
+# Папки зависимостей
+node_modules/
+dist/
+*.lock
