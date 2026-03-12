@@ -123,7 +123,7 @@ function Content() {
         }
     }, [refresh]);
     const enabled = status?.enabled ?? false;
-    return (SP_JSX.jsxs(DFL.PanelSection, { title: "OneXFly F1 Pro", children: [SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ToggleField, { label: "Performance Fix", description: enabled ? "ON (performance mode applied)" : "OFF (defaults restored)", checked: enabled, disabled: busy, onChange: onToggle }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Device", children: status === null ? "Loading…" : status.device_name ?? "Unknown" }) }), status !== null && !status.device_ok && (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Warning", children: "Device check did not match OneXFly F1 Pro. Toggle is still available, but use at your own risk." }) })), error && (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Error", children: error }) }))] }));
+    return (SP_JSX.jsxs(DFL.PanelSection, { title: "OneXFly F1 Pro", children: [SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ToggleField, { label: "Performance Fix", description: enabled ? "ON (performance mode applied)" : "OFF (defaults restored)", checked: enabled, disabled: busy, onChange: onToggle }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Status", children: status === null ? "Loading…" : enabled ? "ON" : "OFF" }) }), error && (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.Field, { label: "Error", children: error }) }))] }));
 }
 var index = definePlugin(() => {
     return {

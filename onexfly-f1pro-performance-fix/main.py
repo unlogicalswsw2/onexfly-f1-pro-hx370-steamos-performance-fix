@@ -49,9 +49,8 @@ class Plugin:
     async def get_status(self) -> Dict[str, Any]:
         """
         Returns:
-          { enabled: bool, device_ok: bool, device_name: str | null, message?: str }
+          { enabled: bool }
         """
-        device_ok, device_name = self._detect_device()
         persisted = self._load_state()
 
         # Best-effort runtime check: service enabled + sysfs values.
@@ -61,8 +60,6 @@ class Plugin:
 
         return {
             "enabled": enabled,
-            "device_ok": device_ok,
-            "device_name": device_name,
         }
 
     async def set_enabled(self, enabled: bool) -> Dict[str, Any]:
@@ -74,13 +71,6 @@ class Plugin:
 
     # -------- Core toggle logic --------
     async def _set_enabled(self, enabled: bool) -> None:
-        device_ok, device_name = self._detect_device()
-        if not device_ok:
-            # Don't hard-block: DMI strings can be wrong/missing. We'll log a warning and still try.
-            decky.logger.warning(
-                f"Device check failed ({device_name or 'unknown'}). Proceeding anyway (intended for OneXFly F1 Pro)."
-            )
-
         if enabled:
             decky.logger.info("Enabling OneXFly performance mode")
             await self._enable()
@@ -153,46 +143,6 @@ class Plugin:
 
         state.enabled = False
         self._save_state(state)
-
-    # -------- Device detection --------
-    def _detect_device(self) -> Tuple[bool, Optional[str]]:
-        """
-        Returns (is_onexfly_f1_pro, human_readable_name)
-        """
-        candidates = [
-            Path("/sys/devices/virtual/dmi/id/product_name"),
-            Path("/sys/devices/virtual/dmi/id/board_name"),
-            Path("/sys/devices/virtual/dmi/id/sys_vendor"),
-        ]
-        parts = []
-        for p in candidates:
-            try:
-                if p.exists():
-                    parts.append(p.read_text(errors="ignore").strip())
-            except Exception:
-                continue
-
-        device_str = " | ".join([x for x in parts if x])
-        lowered = device_str.lower()
-
-        # DMI strings can vary across BIOS revisions. Be tolerant but still specific.
-        # Accept common vendor strings plus an F1 marker.
-        vendor_markers = [
-            "onexfly",
-            "one-netbook",
-            "one netbook",
-            "onexplayer",
-        ]
-        model_markers = [
-            "f1",
-            "f1 pro",
-            "f1pro",
-        ]
-
-        vendor_ok = any(v in lowered for v in vendor_markers)
-        model_ok = any(m in lowered for m in model_markers)
-        ok = vendor_ok and model_ok
-        return ok, (device_str or None)
 
     # -------- Helpers: persistence files --------
     def _ensure_persistence_files(self) -> None:

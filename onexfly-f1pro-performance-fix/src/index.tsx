@@ -5,8 +5,6 @@ import { FaTachometerAlt } from "react-icons/fa";
 
 type StatusResponse = {
   enabled: boolean;
-  device_ok: boolean;
-  device_name: string | null;
 };
 
 const getStatus = callable<[], StatusResponse>("get_status");
@@ -66,18 +64,8 @@ function Content() {
       </PanelSectionRow>
 
       <PanelSectionRow>
-        <Field label="Device">
-          {status === null ? "Loading…" : status.device_name ?? "Unknown"}
-        </Field>
+        <Field label="Status">{status === null ? "Loading…" : enabled ? "ON" : "OFF"}</Field>
       </PanelSectionRow>
-
-      {status !== null && !status.device_ok && (
-        <PanelSectionRow>
-          <Field label="Warning">
-            Device check did not match OneXFly F1 Pro. Toggle is still available, but use at your own risk.
-          </Field>
-        </PanelSectionRow>
-      )}
 
       {error && (
         <PanelSectionRow>
