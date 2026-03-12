@@ -1,0 +1,10 @@
+{
+  "name": "OneXFly F1 Pro HX370 Performance Fix",
+  "author": "unlogicalswsw2",
+  "flags": ["debug", "root"],
+  "publish": {
+    "tags": ["performance", "onexfly", "f1 pro"],
+    "description": "Фикс производительности для OneXFly F1 Pro",
+    "image": "https://example.com/screenshot.png"
+  }
+}

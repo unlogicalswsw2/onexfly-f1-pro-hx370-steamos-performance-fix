@@ -1,0 +1,26 @@
+.onexfly-performance-panel {
+  padding: 10px;
+}
+
+.onexfly-status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.onexfly-status-enabled {
+  background-color: #4caf50;
+  color: white;
+}
+
+.onexfly-status-disabled {
+  background-color: #f44336;
+  color: white;
+}
+
+.onexfly-warning {
+  color: #ff9800;
+  font-size: 12px;
+  margin-top: 10px;
+}

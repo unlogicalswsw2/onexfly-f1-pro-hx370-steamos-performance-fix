@@ -1,0 +1,16 @@
+{
+  "name": "onexfly-f1-pro-hx370-steamos-performance-fix",
+  "version": "1.0.0",
+  "description": "Фикс производительности для OneXFly F1 Pro (HX 370) на SteamOS",
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w"
+  },
+  "devDependencies": {
+    "@decky/rollup": "^1.0.0",
+    "@decky/ui": "^1.0.0",
+    "@decky/api": "^1.0.0",
+    "rollup": "^2.79.1"
+  }
+}
