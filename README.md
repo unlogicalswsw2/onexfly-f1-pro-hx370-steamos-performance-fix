@@ -1,4 +1,4 @@
-## OneXFly F1 Pro (HX370) SteamOS Performance Fix — Decky Loader Plugin
+## NOT WORKING YET!!!! OneXFly F1 Pro (HX370) SteamOS Performance Fix — Decky Loader Plugin 
 
 Decky Loader plugin with a **single ON/OFF toggle** to apply performance tweaks on **OneXFly F1 Pro** and make them **persist after reboot** via `systemd`.
 
